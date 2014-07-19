@@ -14,7 +14,8 @@ namespace VSTOContrib.Core.Tests.RibbonFactory.TestStubs
             IViewContextProvider contextProvider,
             string fallbackRibbonType,
             params Assembly[] assemblies)
-            : base(addInBase, UseIfEmpty(assemblies, Assembly.GetCallingAssembly()), contextProvider, fallbackRibbonType)
+            : base(addInBase, UseIfEmpty(assemblies, Assembly.GetCallingAssembly()), contextProvider, 
+            viewProvider, fallbackRibbonType)
         {
             this.viewProvider = viewProvider;
         }
@@ -26,7 +27,7 @@ namespace VSTOContrib.Core.Tests.RibbonFactory.TestStubs
 
         protected override void InitialiseRibbonFactoryController(IRibbonFactoryController controller, object application)
         {
-            controller.Initialise(viewProvider);
+            viewProvider.Initialise(application);
         }
     }
 }

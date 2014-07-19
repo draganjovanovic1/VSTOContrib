@@ -18,19 +18,21 @@ namespace VSTOContrib.Core.RibbonFactory
         readonly ViewModelResolver ribbonViewModelResolver;
         readonly VstoContribContext vstoContribContext;
         readonly CustomTaskPaneRegister customTaskPaneRegister;
-        IViewProvider viewProvider;
+        readonly IViewProvider viewProvider;
 
         public RibbonFactoryController(
             IViewContextProvider viewContextProvider,
-            VstoContribContext vstoContribContext)
+            VstoContribContext vstoContribContext,
+            IViewProvider viewProvider)
         {
             this.vstoContribContext = vstoContribContext;
+            this.viewProvider = viewProvider;
             var ribbonTypes = GetTRibbonTypesInAssemblies(vstoContribContext.Assemblies).ToList();
 
             customTaskPaneRegister = new CustomTaskPaneRegister(vstoContribContext.AddinBase);
             ribbonViewModelResolver = new ViewModelResolver(
                 ribbonTypes, customTaskPaneRegister, viewContextProvider, 
-                vstoContribContext);
+                vstoContribContext, viewProvider);
 
             var ribbonXmlRewriter = new RibbonXmlRewriter(vstoContribContext, ribbonViewModelResolver);
 
@@ -41,15 +43,6 @@ namespace VSTOContrib.Core.RibbonFactory
             {
                 ribbonXmlRewriter.LocateAndRegisterViewXml(viewModelType, loadMethodName, vstoContribContext.FallbackRibbonType);
             }
-        }
-
-        public void Initialise(IViewProvider viewProvider)
-        {
-            this.viewProvider = viewProvider;
-
-            ribbonViewModelResolver.Initialise(this.viewProvider);
-
-            this.viewProvider.Initialise();
         }
 
         public string GetCustomUI(string ribbonId)
@@ -64,9 +57,9 @@ namespace VSTOContrib.Core.RibbonFactory
             var methodName = caller.GetMethodName();
             CallbackTarget callbackTarget = vstoContribContext.TagToCallbackTargetLookup[control.Tag + methodName];
 
-            var view = (object)control.Context;
-            IRibbonViewModel viewModelInstance = ribbonViewModelResolver.ResolveInstanceFor(view);
-            VstoContribLog.Debug(l => l("Ribbon callback {0} being invoked on {1} (View: {2}, ViewModel: {3})",
+            var view = GetView(control);
+            var viewModelInstance = ribbonViewModelResolver.ResolveInstanceFor(GetView(control));
+            VstoContribLog.Debug(l => l("Ribbon get value callback {0} being invoked on {1} (View: {2}, ViewModel: {3})",
                 methodName, control.Id, view.ToLogFormat(), viewModelInstance.ToLogFormat()));
 
             Type type = viewModelInstance.GetType();
@@ -107,10 +100,14 @@ namespace VSTOContrib.Core.RibbonFactory
         {
             try
             {
+                var methodName = caller.GetMethodName();
                 CallbackTarget callbackTarget =
-                    vstoContribContext.TagToCallbackTargetLookup[control.Tag + caller.GetMethodName()];
+                    vstoContribContext.TagToCallbackTargetLookup[control.Tag + methodName];
 
-                IRibbonViewModel viewModelInstance = ribbonViewModelResolver.ResolveInstanceFor(control.Context);
+                var view = GetView(control);
+                var viewModelInstance = ribbonViewModelResolver.ResolveInstanceFor(view);
+                VstoContribLog.Debug(l => l("Ribbon get value callback {0} being invoked on {1} (View: {2}, ViewModel: {3})",
+                    methodName, control.Id, view.ToLogFormat(), viewModelInstance.ToLogFormat()));
 
                 Type type = viewModelInstance.GetType();
                 PropertyInfo property = type.GetProperty(callbackTarget.Method);
@@ -154,6 +151,13 @@ namespace VSTOContrib.Core.RibbonFactory
                 if (!handled)
                     throw innerEx;
             }
+        }
+
+        OfficeWin32Window GetView(IRibbonControl control)
+        {
+            var context = (object) control.Context;
+            var view = viewProvider.ToOfficeWindow(context);
+            return view;
         }
 
         // http://weblogs.asp.net/fmarguerie/archive/2008/01/02/rethrowing-exceptions-and-preserving-the-full-call-stack-trace.aspx

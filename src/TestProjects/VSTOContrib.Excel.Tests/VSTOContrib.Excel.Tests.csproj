@@ -49,6 +49,7 @@
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
+    <Reference Include="PresentationCore" />
     <Reference Include="Shouldly">
       <HintPath>..\..\packages\Shouldly.2.1.1\lib\net40\Shouldly.dll</HintPath>
     </Reference>
