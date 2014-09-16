@@ -6,18 +6,18 @@ namespace VSTOContrib.Core.Tests.RibbonFactory.TestStubs
 {
     internal class TestRibbonFactory : Core.RibbonFactory.RibbonFactory
     {
-        private readonly IViewProvider viewProvider;
+        private readonly IOfficeApplicationEvents officeApplicationEvents;
 
         public TestRibbonFactory(
             AddInBase addInBase,
-            IViewProvider viewProvider,
+            IOfficeApplicationEvents officeApplicationEvents,
             IViewContextProvider contextProvider,
             string fallbackRibbonType,
             params Assembly[] assemblies)
             : base(addInBase, UseIfEmpty(assemblies, Assembly.GetCallingAssembly()), contextProvider, 
-            viewProvider, fallbackRibbonType)
+            officeApplicationEvents, fallbackRibbonType)
         {
-            this.viewProvider = viewProvider;
+            this.officeApplicationEvents = officeApplicationEvents;
         }
 
         protected override void ShuttingDown()
@@ -27,7 +27,7 @@ namespace VSTOContrib.Core.Tests.RibbonFactory.TestStubs
 
         protected override void InitialiseRibbonFactoryController(IRibbonFactoryController controller, object application)
         {
-            viewProvider.Initialise(application);
+            officeApplicationEvents.Initialise(application);
         }
     }
 }
