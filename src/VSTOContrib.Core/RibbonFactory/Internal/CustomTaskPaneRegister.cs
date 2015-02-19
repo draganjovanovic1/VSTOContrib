@@ -76,6 +76,7 @@ namespace VSTOContrib.Core.RibbonFactory.Internal
 
             foreach (var oneToManyCustomTaskPaneAdapter in windowToTaskPaneLookup[view]
                 .Except(new[] { ribbonViewModel })
+                .Where(viewModelToHide => ribbonTaskPanes.ContainsKey(viewModelToHide))
                 .SelectMany(viewModelToHide => ribbonTaskPanes[viewModelToHide]))
             {
                 oneToManyCustomTaskPaneAdapter.HideIfVisible();

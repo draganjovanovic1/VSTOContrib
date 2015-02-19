@@ -62,6 +62,7 @@ namespace VSTOContrib.Core.RibbonFactory.Internal
             if (viewModel.RibbonUi == null) return;
             foreach (var targets in notifyChangeTargetLookup[viewModel.GetType()])
             {
+                VstoContribLog.Debug(_ => _("Invalidating control: {0}", targets.Value));
                 viewModel.RibbonUi.InvalidateControl(targets.Value);
             }
         }
@@ -81,10 +82,11 @@ namespace VSTOContrib.Core.RibbonFactory.Internal
         {
             VstoContribLog.Debug(_ => _("ViewProvider.NewView Raised, Type: {0}, View: {1}, Context: {2}",
                 e.RibbonType, e.ViewInstance.ToLogFormat(), e.ViewContext.ToLogFormat()));
-            if (ribbonUiLookup.ContainsKey("default"))
+            if (ribbonUiLookup.ContainsKey(DefaultRibbon)
+                && !ribbonUiLookup.ContainsKey(e.RibbonType))
             {
-                ribbonUiLookup.Add(e.RibbonType, ribbonUiLookup["default"]);
-                ribbonUiLookup.Remove("default");
+                ribbonUiLookup.Add(e.RibbonType, ribbonUiLookup[DefaultRibbon]);
+                //ribbonUiLookup.Remove(DefaultRibbon);
             }
             var viewModel = GetOrCreateViewModel(e.RibbonType, e.ViewContext ?? NullContext.Instance, e.ViewInstance);
             if (viewModel == null) return;
@@ -144,6 +146,8 @@ namespace VSTOContrib.Core.RibbonFactory.Internal
         {
             ribbonUiLookup.Add(currentlyLoadingRibbon, ribbonUi);
 
+            VstoContribLog.Debug(_ => _("ribbonTypeLookup.ContainsKey({0}) = {1}", currentlyLoadingRibbon, ribbonTypeLookup.ContainsKey(currentlyLoadingRibbon)));
+
             if (!ribbonTypeLookup.ContainsKey(currentlyLoadingRibbon))
                 return;
             var viewModelType = ribbonTypeLookup[currentlyLoadingRibbon];
@@ -164,7 +168,7 @@ namespace VSTOContrib.Core.RibbonFactory.Internal
         private IRibbonViewModel BuildViewModel(string ribbonType, object viewInstance, object viewContext)
         {
             var viewModelType = ribbonTypeLookup[ribbonType];
-            VstoContribLog.Info(_ => _("Building ViewModel of type {1} for ribbon {1} with context {2}", 
+            VstoContribLog.Info(_ => _("Building ViewModel of type {1} for ribbon {1} with context {2}",
                 viewModelType.Name, ribbonType, viewContext.ToLogFormat()));
             var ribbonViewModel = vstoContribContext.ViewModelFactory.Resolve(viewModelType);
             ribbonViewModel.VstoFactory = vstoContribContext.VstoFactory;

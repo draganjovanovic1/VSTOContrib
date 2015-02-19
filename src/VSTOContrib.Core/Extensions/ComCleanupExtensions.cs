@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -43,7 +44,11 @@ namespace VSTOContrib.Core.Extensions
         public static void ReleaseComObject<T>(this T resource) where T : class
         {
             if (resource != null && Marshal.IsComObject(resource))
-                Marshal.ReleaseComObject(resource);
+            {
+                Marshal.FinalReleaseComObject(resource);
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
         }
     }
 }
