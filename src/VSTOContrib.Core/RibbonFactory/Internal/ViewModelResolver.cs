@@ -62,7 +62,6 @@ namespace VSTOContrib.Core.RibbonFactory.Internal
             if (viewModel.RibbonUi == null) return;
             foreach (var targets in notifyChangeTargetLookup[viewModel.GetType()])
             {
-                VstoContribLog.Debug(_ => _("Invalidating control: {0}", targets.Value));
                 viewModel.RibbonUi.InvalidateControl(targets.Value);
             }
         }
